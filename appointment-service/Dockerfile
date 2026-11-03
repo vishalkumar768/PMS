@@ -10,7 +10,7 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine AS runner
+FROM ibm-semeru-runtimes:open-21-jre AS runner
 
 WORKDIR /app
 
