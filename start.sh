@@ -15,8 +15,6 @@ SERVICES=(
   patient-service
   appointment-service
   api-gateway
-  prometheus
-  grafana
   nginx
 )
 
@@ -42,7 +40,7 @@ echo ">>> All images pulled successfully!"
 
 # --- STEP 1: Base Infrastructure ---
 echo ""
-echo ">>> Step 1/5: Starting Databases & Messaging (Postgres, Redis, Kafka)..."
+echo ">>> Step 1/4: Starting Databases & Messaging (Postgres, Redis, Kafka)..."
 docker compose up -d postgres redis kafka
 
 wait_for_healthy postgres
@@ -51,29 +49,25 @@ sleep 2
 
 # --- STEP 2: Core Dependencies ---
 echo ""
-echo ">>> Step 2/5: Starting Core Services (Auth & Billing)..."
+echo ">>> Step 2/4: Starting Core Services (Auth & Billing)..."
 docker compose up -d auth-service billing-service
 echo "Giving JVM services 12s to initialize..."
 sleep 12
 
 # --- STEP 3: Domain Services ---
 echo ""
-echo ">>> Step 3/5: Starting Domain Services (Patient, Appointment, Analytics)..."
+echo ">>> Step 3/4: Starting Domain Services (Patient, Appointment, Analytics)..."
 docker compose up -d patient-service appointment-service analytics-service
 echo "Giving JVM services 15s to initialize..."
 sleep 15
 
-# --- STEP 4: API Gateway ---
+# --- STEP 4: API Gateway & Reverse Proxy ---
 echo ""
-echo ">>> Step 4/5: Starting API Gateway..."
+echo ">>> Step 4/4: Starting API Gateway & Nginx..."
 docker compose up -d api-gateway
 echo "Giving Gateway 10s to warm up..."
 sleep 10
-
-# --- STEP 5: Monitoring & Reverse Proxy ---
-echo ""
-echo ">>> Step 5/5: Starting Prometheus, Grafana & Nginx..."
-docker compose up -d prometheus grafana nginx
+docker compose up -d nginx
 
 echo ""
 echo "=========================================================="
