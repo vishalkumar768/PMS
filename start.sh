@@ -2,8 +2,23 @@
 set -e
 
 echo "=========================================================="
-echo " Starting PMS Services Gracefully (Low Memory Safe)      "
+echo " PMS Low-Memory Deployment Script                         "
 echo "=========================================================="
+
+SERVICES=(
+  postgres
+  redis
+  kafka
+  auth-service
+  billing-service
+  analytics-service
+  patient-service
+  appointment-service
+  api-gateway
+  prometheus
+  grafana
+  nginx
+)
 
 # Function to wait for a container to become healthy
 wait_for_healthy() {
@@ -16,7 +31,16 @@ wait_for_healthy() {
   echo " [OK] $container is healthy!"
 }
 
-# 1. Base Infrastructure
+# --- STEP 0: Sequential Pull ---
+echo ""
+echo ">>> Step 0: Pulling Docker images ONE BY ONE (prevents CPU & I/O thrashing)..."
+for svc in "${SERVICES[@]}"; do
+  echo "==> Pulling image for: $svc"
+  docker compose pull "$svc"
+done
+echo ">>> All images pulled successfully!"
+
+# --- STEP 1: Base Infrastructure ---
 echo ""
 echo ">>> Step 1/5: Starting Databases & Messaging (Postgres, Redis, Kafka)..."
 docker compose up -d postgres redis kafka
@@ -25,28 +49,28 @@ wait_for_healthy postgres
 wait_for_healthy kafka
 sleep 2
 
-# 2. Core Dependencies
+# --- STEP 2: Core Dependencies ---
 echo ""
 echo ">>> Step 2/5: Starting Core Services (Auth & Billing)..."
 docker compose up -d auth-service billing-service
 echo "Giving JVM services 12s to initialize..."
 sleep 12
 
-# 3. Domain Services
+# --- STEP 3: Domain Services ---
 echo ""
 echo ">>> Step 3/5: Starting Domain Services (Patient, Appointment, Analytics)..."
 docker compose up -d patient-service appointment-service analytics-service
 echo "Giving JVM services 15s to initialize..."
 sleep 15
 
-# 4. API Gateway
+# --- STEP 4: API Gateway ---
 echo ""
 echo ">>> Step 4/5: Starting API Gateway..."
 docker compose up -d api-gateway
 echo "Giving Gateway 10s to warm up..."
 sleep 10
 
-# 5. Monitoring & Reverse Proxy
+# --- STEP 5: Monitoring & Reverse Proxy ---
 echo ""
 echo ">>> Step 5/5: Starting Prometheus, Grafana & Nginx..."
 docker compose up -d prometheus grafana nginx
