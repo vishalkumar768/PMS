@@ -10,7 +10,7 @@ services:
       - internal
     depends_on:
       - api-gateway
-      - grafana
+#      - grafana
 
   kafka:
     image: apache/kafka-native:latest
